@@ -1,0 +1,5 @@
+{
+  "name": "CineAI Explorer",
+  "description": "Una aplicación de películas avanzada impulsada por Gemini para búsqueda inteligente, categorías personalizadas y recomendaciones basadas en IA.",
+  "requestFramePermissions": []
+}
