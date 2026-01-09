@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Movie, SearchResult } from "../types";
 
 // Inicialización con la API Key del entorno
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
 const MOVIE_SCHEMA = {
   type: Type.OBJECT,
