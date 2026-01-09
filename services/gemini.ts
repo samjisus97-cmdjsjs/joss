@@ -2,7 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Movie, SearchResult } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+// Inicialización con la API Key del entorno
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MOVIE_SCHEMA = {
   type: Type.OBJECT,
@@ -50,48 +51,48 @@ const MOVIE_SCHEMA = {
   required: ["movies"]
 };
 
-// Prompt base para inyectar enlaces de ejemplo seguros
-const PROMPT_INSTRUCTION = "Devuelve los resultados en JSON. Para el campo 'links', genera al menos 2 servidores ficticios pero con formato de URL de embed real (ej. https://vidsrc.to/embed/movie/tt1234567 o similar).";
+const PROMPT_INSTRUCTION = "Responde estrictamente en formato JSON. Para el campo 'links', genera al menos 2 servidores con URLs de ejemplo funcionales tipo embed (ej. https://vidsrc.to/embed/movie/tt1234567).";
 
 export const movieService = {
   async getTrendingMovies(): Promise<Movie[]> {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Genera 10 películas actuales populares. ${PROMPT_INSTRUCTION}`,
+      contents: `Genera una lista de 10 películas populares actuales con metadatos completos y enlaces de servidor. ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: MOVIE_SCHEMA
       }
     });
-    const result = JSON.parse(response.text);
-    return result.movies;
+    return JSON.parse(response.text).movies;
   },
 
   async getMoviesByCategory(categoryId: string): Promise<Movie[]> {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Genera 12 películas del género: ${categoryId}. ${PROMPT_INSTRUCTION}`,
+      contents: `Lista de 12 películas para la categoría: ${categoryId}. ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: MOVIE_SCHEMA
       }
     });
-    const result = JSON.parse(response.text);
-    return result.movies;
+    return JSON.parse(response.text).movies;
   },
 
   async searchMovies(query: string): Promise<SearchResult> {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Busca películas relacionadas con: "${query}". ${PROMPT_INSTRUCTION}`,
+      contents: `Busca películas y explica por qué son relevantes para: "${query}". ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           ...MOVIE_SCHEMA,
-          properties: { ...MOVIE_SCHEMA.properties, aiReasoning: { type: Type.STRING } }
+          properties: {
+            ...MOVIE_SCHEMA.properties,
+            aiReasoning: { type: Type.STRING, description: "Explicación de por qué estos resultados coinciden con la búsqueda." }
+          }
         }
       }
     });
-    return JSON.parse(response.text) as SearchResult;
+    return JSON.parse(response.text);
   }
 };
