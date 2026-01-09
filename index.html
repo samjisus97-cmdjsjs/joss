@@ -4,35 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineAI - Premium Streaming</title>
-    <!-- CSP balanceada: Permite scripts de video pero restringe la apertura de ventanas no deseadas -->
+    <meta name="description" content="CineAI - Tu plataforma de streaming premium con inteligencia artificial.">
+    <title>CineAI | Streaming de Películas Online</title>
+    
+    <!-- CSP: Bloquea que los anuncios intenten ejecutar scripts externos fuera de los dominios permitidos -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; child-src 'self' https:; frame-src https:; form-action 'self';">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #09090b;
+        }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #09090b;
+            background-color: var(--bg);
             color: #fafafa;
             overflow-x: hidden;
         }
-        
-        /* Bloqueador de redirecciones forzadas (Frame-busting prevention) */
-        window.onbeforeunload = function() {
-            if (window.isPlayerActive) {
-                return "Protección: Un anuncio intentó redirigirte.";
-            }
-        };
 
-        ::-webkit-scrollbar { width: 6px; }
+        /* Script de protección contra redirecciones forzadas (Anti-Frame Busting) */
+        (function() {
+            var preventNavigation = false;
+            window.onbeforeunload = function() {
+                if (preventNavigation) {
+                    return "CineAI: Se ha bloqueado un intento de redirección publicitaria.";
+                }
+            };
+            // Activamos la protección cuando el usuario interactúa con el reproductor
+            window.setPlayerProtection = function(active) {
+                preventNavigation = active;
+            };
+        })();
+
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #09090b; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-        .glass { background: rgba(15, 15, 18, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .hero-gradient { background: linear-gradient(to top, #09090b 0%, rgba(9,9,11,0.8) 50%, transparent 100%); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .web-glass { background: rgba(15, 15, 18, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+        .movie-card-shadow { shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5); }
+        
+        /* Animaciones para que se sienta como una web fluida */
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+
     <script type="importmap">
     {
       "imports": {
