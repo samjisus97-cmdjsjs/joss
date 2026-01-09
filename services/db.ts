@@ -4,7 +4,7 @@ import { Movie, ViewingProgress } from '../types';
 const DB_NAME = 'CineAIDatabase';
 const MOVIE_STORE = 'movies';
 const PROGRESS_STORE = 'playback_progress';
-const DB_VERSION = 2; // Incrementada versión para nueva tabla
+const DB_VERSION = 2;
 
 export const dbService = {
   async initDB(): Promise<IDBDatabase> {
@@ -51,6 +51,23 @@ export const dbService = {
     });
   },
 
+  async getAllMovies(): Promise<Movie[]> {
+    const db = await this.initDB();
+    const transaction = db.transaction(MOVIE_STORE, 'readonly');
+    const store = transaction.objectStore(MOVIE_STORE);
+    return new Promise((resolve) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+  },
+
+  async clearAllMovies(): Promise<void> {
+    const db = await this.initDB();
+    const transaction = db.transaction(MOVIE_STORE, 'readwrite');
+    const store = transaction.objectStore(MOVIE_STORE);
+    store.clear();
+  },
+
   async getMoviesPaged(offset: number, limit: number): Promise<Movie[]> {
     const db = await this.initDB();
     const transaction = db.transaction(MOVIE_STORE, 'readonly');
@@ -90,7 +107,6 @@ export const dbService = {
       const request = store.getAll();
       request.onsuccess = () => {
         const results = request.result as ViewingProgress[];
-        // Devolver ordenado por el más reciente
         resolve(results.sort((a, b) => b.lastPlayed - a.lastPlayed));
       };
     });

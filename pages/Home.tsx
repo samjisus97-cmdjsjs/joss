@@ -5,7 +5,7 @@ import { Movie } from '../types';
 import MovieCard from '../components/MovieCard';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Loader2, Sparkles, Play, Database, Zap, Clock, ChevronRight, LayoutGrid, Heart, Flame, Star } from 'lucide-react';
+import { Loader2, Sparkles, Play, Database, Zap, Clock, ChevronRight, LayoutGrid, Heart, Flame, Star, History } from 'lucide-react';
 
 const CATEGORIES = [
   { id: 'accion', name: 'Acción', icon: '💥' },
@@ -93,11 +93,11 @@ const Home: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-30 space-y-24">
         
-        {/* SEGUIR VIENDO - CON BARRA DE PROGRESO */}
+        {/* SEGUIR VIENDO - POSICIONADO AL INICIO DE LA HOME */}
         {continueWatching.length > 0 && (
           <section className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <h2 className="text-3xl font-black flex items-center gap-4 tracking-tight">
-              <Clock className="w-8 h-8 text-indigo-500" /> Seguir viendo
+              <History className="w-8 h-8 text-indigo-500" /> Seguir viendo
             </h2>
             <div className="flex gap-8 overflow-x-auto pb-6 no-scrollbar snap-x">
               {continueWatching.slice(0, 10).map((item) => (
@@ -105,9 +105,9 @@ const Home: React.FC = () => {
                   <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden border border-zinc-800 bg-zinc-900 shadow-xl group-hover:border-indigo-500/50 transition-all duration-300">
                     <img src={item.posterUrl} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" alt="" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play className="w-10 h-10 text-white fill-current" />
+                      <History className="w-10 h-10 text-white" />
                     </div>
-                    {/* BARRA DE PROGRESO */}
+                    {/* BARRA DE PROGRESO VISIBLE */}
                     <div className="absolute bottom-0 left-0 w-full h-1.5 bg-zinc-950">
                       <div 
                         className="h-full bg-indigo-500 shadow-[0_0_15px_indigo] transition-all duration-1000" 
@@ -119,7 +119,7 @@ const Home: React.FC = () => {
                     </div>
                   </div>
                   <h3 className="mt-4 text-base font-black text-zinc-400 truncate group-hover:text-white transition-colors">{item.movieTitle}</h3>
-                  <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">HACE UN MOMENTO</p>
+                  <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">CONTINUAR AHORA</p>
                 </Link>
               ))}
             </div>
@@ -151,14 +151,14 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* ACCESO AL GRAN CATÁLOGO - REFINADO */}
+        {/* ACCESO AL GRAN CATÁLOGO */}
         <section className="bg-gradient-to-br from-indigo-950 via-zinc-900 to-zinc-900 border border-indigo-500/20 rounded-[4rem] p-16 relative overflow-hidden group">
           <div className="absolute -top-24 -right-24 p-12 opacity-10 group-hover:scale-110 transition-transform duration-1000 group-hover:rotate-12">
              <Database className="w-96 h-96 text-indigo-500" />
           </div>
           <div className="relative z-10 max-w-2xl space-y-8">
             <h2 className="text-6xl font-black text-white tracking-tighter leading-none">Descubre más de 11,000 títulos únicos.</h2>
-            <p className="text-xl text-zinc-400 font-medium leading-relaxed">Nuestra biblioteca exclusiva se sincroniza cada 24h para ofrecerte la colección más completa de la red.</p>
+            <p className="text-xl text-zinc-400 font-medium leading-relaxed">Las películas que añadas al catálogo se guardarán de forma permanente para todos los usuarios.</p>
             <Link to="/catalog" className="inline-flex items-center gap-4 px-12 py-5 bg-indigo-600 text-white font-black rounded-3xl hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-600/30 hover:scale-105 active:scale-95">
               EXPLORAR CATÁLOGO COMPLETO <ChevronRight className="w-6 h-6" />
             </Link>

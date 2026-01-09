@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [globalMovies, setGlobalMovies] = useState<Movie[]>([]);
   const [continueWatching, setContinueWatching] = useState<ViewingProgress[]>([]);
 
+  // Carga inicial y refresco de datos persistentes
   const refreshGlobalMovies = useCallback(async () => {
     const paged = await dbService.getMoviesPaged(0, 50);
     setGlobalMovies(paged);
@@ -34,17 +35,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    // 1. Recuperar sesión persistente
     const activeSession = localStorage.getItem('cineai_session');
     if (activeSession) {
       try {
         const sessionUser = JSON.parse(activeSession);
         const users = getUsersDB();
         const freshUser = users.find(u => u.id === sessionUser.id);
-        setUser(freshUser || sessionUser);
+        if (freshUser) {
+          setUser(freshUser);
+        } else {
+          setUser(sessionUser);
+        }
       } catch (e) {
-        localStorage.removeItem('cineai_session');
+        console.error("Error al recuperar sesión:", e);
       }
     }
+    // 2. Cargar catálogo de IndexedDB
     refreshGlobalMovies();
   }, [refreshGlobalMovies]);
 
@@ -82,33 +89,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = (name: string, email: string, password: string) => {
     const users = getUsersDB();
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return { success: false, message: "Este correo ya existe." };
+    const cleanEmail = email.trim().toLowerCase();
+    if (users.find(u => u.email.toLowerCase() === cleanEmail)) {
+      return { success: false, message: "Este correo ya está registrado." };
     }
     const newUser: User = {
       id: crypto.randomUUID(),
-      name, email: email.toLowerCase(), password,
-      favorites: [], userMovies: [], continueWatching: [],
+      name, 
+      email: cleanEmail, 
+      password,
+      favorites: [], 
+      userMovies: [], 
+      continueWatching: [],
       joinedDate: new Date().toLocaleDateString(),
-      role: email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user',
+      role: cleanEmail === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user',
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
     };
-    localStorage.setItem('cineai_users_db', JSON.stringify([...users, newUser]));
+    const updatedUsers = [...users, newUser];
+    localStorage.setItem('cineai_users_db', JSON.stringify(updatedUsers));
     setUser(newUser);
     localStorage.setItem('cineai_session', JSON.stringify(newUser));
-    return { success: true, message: "OK" };
+    return { success: true, message: "Registro exitoso" };
   };
 
   const login = (email: string, password: string) => {
     const users = getUsersDB();
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-    if (!found) return { success: false, message: "Credenciales inválidas" };
+    const cleanEmail = email.trim().toLowerCase();
+    const found = users.find(u => u.email.toLowerCase() === cleanEmail && u.password === password);
+    if (!found) return { success: false, message: "Email o contraseña incorrectos" };
     setUser(found);
     localStorage.setItem('cineai_session', JSON.stringify(found));
-    return { success: true, message: "OK" };
+    return { success: true, message: "Bienvenido" };
   };
 
-  const logout = () => { setUser(null); localStorage.removeItem('cineai_session'); };
+  const logout = () => { 
+    setUser(null); 
+    localStorage.removeItem('cineai_session'); 
+  };
 
   const addMoviesToGlobal = async (newMovies: Movie[]) => {
     await dbService.addMovies(newMovies);
@@ -129,6 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth error');
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

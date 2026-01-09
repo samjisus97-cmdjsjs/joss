@@ -2,8 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Movie, SearchResult } from "../types";
 
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MOVIE_SCHEMA = {
   type: Type.OBJECT,
@@ -21,36 +20,57 @@ const MOVIE_SCHEMA = {
           genre: { type: Type.ARRAY, items: { type: Type.STRING } },
           description: { type: Type.STRING },
           posterUrl: { type: Type.STRING },
+          backdropUrl: { type: Type.STRING },
           director: { type: Type.STRING },
-          cast: { type: Type.ARRAY, items: { type: Type.STRING } }
+          cast: { type: Type.ARRAY, items: { type: Type.STRING } },
+          links: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                language: { type: Type.STRING },
+                servers: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      name: { type: Type.STRING },
+                      url: { type: Type.STRING }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        required: ["id", "title", "year", "rating", "genre", "description", "posterUrl"]
+        required: ["id", "title", "year", "rating", "genre", "description", "posterUrl", "links"]
       }
     }
   },
   required: ["movies"]
 };
 
+// Prompt base para inyectar enlaces de ejemplo seguros
+const PROMPT_INSTRUCTION = "Devuelve los resultados en JSON. Para el campo 'links', genera al menos 2 servidores ficticios pero con formato de URL de embed real (ej. https://vidsrc.to/embed/movie/tt1234567 o similar).";
+
 export const movieService = {
   async getTrendingMovies(): Promise<Movie[]> {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: "Genera una lista de 8 películas populares actuales con metadatos completos en formato JSON.",
+      model: 'gemini-3-flash-preview',
+      contents: `Genera 10 películas actuales populares. ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: MOVIE_SCHEMA
       }
     });
-    // Extract text directly from response.text property
     const result = JSON.parse(response.text);
     return result.movies;
   },
 
-  // Fix: Added missing getMoviesByCategory method required by CategoryPage
   async getMoviesByCategory(categoryId: string): Promise<Movie[]> {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Genera una lista de 8 películas populares del género o categoría: "${categoryId}" con metadatos completos en formato JSON.`,
+      model: 'gemini-3-flash-preview',
+      contents: `Genera 12 películas del género: ${categoryId}. ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: MOVIE_SCHEMA
@@ -62,8 +82,8 @@ export const movieService = {
 
   async searchMovies(query: string): Promise<SearchResult> {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Busca películas relacionadas con: "${query}". Devuelve resultados y una breve explicación en 'aiReasoning'.`,
+      model: 'gemini-3-flash-preview',
+      contents: `Busca películas relacionadas con: "${query}". ${PROMPT_INSTRUCTION}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -73,37 +93,5 @@ export const movieService = {
       }
     });
     return JSON.parse(response.text) as SearchResult;
-  },
-
-  async processMovieBatch(movieData: {title: string, embedUrl: string}[]): Promise<Movie[]> {
-    const titles = movieData.map(m => m.title).join(", ");
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Procesa esta lista de títulos: ${titles}. Genera metadatos realistas (poster, descripción, año, etc.). Responde estrictamente en JSON.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: MOVIE_SCHEMA
-      }
-    });
-
-    try {
-      const result = JSON.parse(response.text);
-      const generatedMovies: Movie[] = result.movies || [];
-      
-      // Mapear los enlaces embed de vuelta a las películas generadas por la IA
-      return generatedMovies.map(movie => {
-        const original = movieData.find(m => 
-          m.title.toLowerCase().includes(movie.title.toLowerCase()) || 
-          movie.title.toLowerCase().includes(m.title.toLowerCase())
-        );
-        return {
-          ...movie,
-          videoUrl: original?.embedUrl || ""
-        };
-      });
-    } catch (e) {
-      console.error("Error processing batch:", e);
-      return [];
-    }
   }
 };
